@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: ppe-backend
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn web_app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PPE_MODEL
+        value: ppe.pt
+      - key: CORS_ORIGINS
+        # Set this to the deployed frontend URL after first deploy, e.g. https://ppe-frontend.onrender.com
+        value: https://example-frontend.onrender.com
+  - type: static_site
+    name: ppe-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    publishPath: frontend-react/dist
+    rootDir: frontend-react
+    envVars:
+      - key: VITE_API_BASE
+        value: https://ppe-backend.onrender.com

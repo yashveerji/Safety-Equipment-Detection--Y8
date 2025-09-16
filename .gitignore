@@ -1,0 +1,105 @@
+# ---- Top-level ignores for combined FastAPI + React (Vite) project ----
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environments
+.env
+.venv
+venv/
+python_env/
+.env.bak
+.env.local
+
+# Model training artifacts (keep committed model weights explicitly if needed)
+*.pt
+!ppe.pt  # Keep the main PPE YOLO model already tracked
+*.onnx
+runs/
+checkpoints/
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+profile_default/
+.ipython/
+
+# Logs & debug
+logs/
+*.log
+*.pid
+*.out
+*.err
+
+# Coverage / testing
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.junit/
+.tox/
+.mypy_cache/
+.pyre/
+ruff_cache/
+
+# Build & distribution
+build/
+dist/
+site/
+*.egg-info/
+.eggs/
+wheelhouse/
+
+# Node / Frontend
+frontend-react/node_modules/
+frontend-react/dist/
+frontend-react/.vite/
+*.tsbuildinfo
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Environment & secrets
+*.env
+*.env.*
+!frontend-react/.env.example
+!.env.example
+
+# Cache / misc
+.cache/
+.tmp/
+.temp/
+*.swp
+
+# Uploads / generated media (if any future feature produces these)
+uploads/
+media/
+
+# Render / deployment intermediate (keep config file)
+render-build/
+
+# Lockfiles (optional: comment out if you want to commit exact deps)
+# Pipenv / Poetry
+Pipfile.lock
+poetry.lock
+# npm / yarn (keeping lockfile is usually recommended; comment to track)
+# frontend-react/package-lock.json
+# frontend-react/yarn.lock
+# frontend-react/pnpm-lock.yaml
+
+# Zone drawing temp files
+zones-draft.json
+
+# Temporary CSV / NDJSON exports
+*.csv
+*.ndjson
+
+# Backup files
+*~
+*.bak
