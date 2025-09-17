@@ -1,0 +1,303 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>PPE Vision Console</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    :root {
+      --bg:#0b1118; --bg-alt:#111a23; --panel:#16212c; --panel-alt:#1d2a36; --panel-soft:#223140;
+      --accent:#2d7dff; --accent-b:#6a5af9; --accent-grad:linear-gradient(135deg,#2d7dff,#6a5af9);
+      --border:#263544; --border-glow:#2d7dff55; --text:#d6e2ec; --text-dim:#8ea1b2;
+      --ok:#18c27c; --warn:#ffb547; --danger:#ff4d5b; --radius:14px; --shadow:0 4px 18px -4px rgba(0,0,0,.55),0 6px 32px -8px rgba(0,0,0,.55);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: 'Inter', system-ui, "Segoe UI", Roboto, Arial, sans-serif; background:radial-gradient(circle at 20% 20%,#13202b,#091219 70%); color:var(--text); -webkit-font-smoothing:antialiased; }
+    header { height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 26px; background:#09141dcc; backdrop-filter:blur(16px); position:sticky; top:0; z-index:50; border-bottom:1px solid #15222e; }
+    header h1 { font-size:17px; letter-spacing:.7px; margin:0; font-weight:600; background:var(--accent-grad); -webkit-background-clip:text; color:transparent; display:flex; align-items:center; gap:10px; }
+    header h1 span.badge { background:#1e2c39; color:var(--accent); padding:4px 10px; font-size:11px; border-radius:999px; letter-spacing:.5px; font-weight:500; border:1px solid #28415c; }
+    .app { display:grid; grid-template-columns:300px 1fr; min-height:calc(100vh - 64px); }
+    aside { background:linear-gradient(180deg,#121e27,#0b141c); border-right:1px solid #14202a; padding:26px 22px 46px; display:flex; flex-direction:column; gap:28px; }
+    main { padding:30px 40px 70px; overflow:auto; }
+    h2 { margin:0 0 12px; font-size:15px; font-weight:600; letter-spacing:.6px; }
+    h3 { margin:22px 0 12px; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.85px; opacity:.82; }
+    p.note { font-size:11px; color:var(--text-dim); margin:4px 0 0; line-height:1.4; }
+    section.block { background:linear-gradient(145deg,#182633,#101b25 60%); border:1px solid #1e2d39; border-radius:var(--radius); padding:18px 20px 22px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+    section.block:before { content:""; position:absolute; inset:0; background:radial-gradient(circle at 120% -10%, #2d7dff15, transparent 60%); pointer-events:none; }
+    .divider { height:1px; background:#1d2b36; margin:18px 0; border-radius:2px; box-shadow:0 1px 0 #254055; }
+    label.lbl { font-size:11px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; display:flex; justify-content:space-between; color:var(--text-dim); margin-bottom:6px; }
+    input[type=range] { width:100%; cursor:pointer; accent-color:var(--accent); }
+    input[type=range]:hover { filter:brightness(1.1); }
+    .value-pill { background:#223041; padding:2px 8px; font-size:11px; border-radius:8px; color:var(--accent); border:1px solid #2c4255; }
+    .toggles { display:flex; flex-direction:column; gap:10px; }
+    .toggle { display:flex; align-items:center; justify-content:space-between; background:#17242f; padding:10px 12px; border:1px solid #20323f; border-radius:10px; position:relative; }
+    .toggle:hover { background:#1d2d3a; }
+    .toggle span { font-size:12px; font-weight:500; letter-spacing:.4px; }
+    button, .btn { font-family:inherit; cursor:pointer; border:none; }
+    button.primary { background:var(--accent-grad); border:1px solid #3d57ff; padding:10px 18px 11px; border-radius:999px; font-weight:600; color:#fff; font-size:13px; letter-spacing:.3px; box-shadow:0 4px 18px -4px #2d7dffaa; transition:.25s; }
+    button.primary:hover { transform:translateY(-2px); box-shadow:0 6px 22px -4px #2d7dffbb,0 0 0 1px #2d7dff80 inset; }
+    button.outline { background:#172534; border:1px solid #2a4052; color:#cdd9e3; padding:9px 16px 10px; border-radius:10px; font-size:13px; font-weight:500; }
+    button.outline:hover { background:#1e3142; }
+    .apply-row { display:flex; gap:10px; }
+    .upload-zone { border:1.5px dashed #2b4455; border-radius:14px; padding:26px 18px; text-align:center; font-size:13px; color:#87a1b7; background:#172632; cursor:pointer; transition:.25s; position:relative; overflow:hidden; }
+    .upload-zone:before { content:""; position:absolute; inset:0; background:linear-gradient(120deg,#2d7dff10,#6a5af910); opacity:0; transition:.4s; }
+    .upload-zone.drag, .upload-zone:hover { border-color:var(--accent); color:#fff; }
+    .upload-zone.drag:before, .upload-zone:hover:before { opacity:1; }
+    img.media-preview { max-width:640px; width:100%; border:1px solid #253844; border-radius:14px; margin-top:18px; display:block; box-shadow:0 4px 18px -4px #000; }
+    pre.json { background:#09131b; color:#9ef7c9; padding:16px 18px; font-size:12px; overflow:auto; max-height:300px; border:1px solid #1c2c38; border-radius:12px; line-height:1.45; }
+    table { width:100%; border-collapse:separate; border-spacing:0 6px; font-size:12px; }
+    table thead th { font-size:11px; text-transform:uppercase; letter-spacing:.6px; font-weight:600; color:#82a1b7; padding:0 8px 6px; text-align:left; }
+    table tbody tr { background:#16242f; box-shadow:0 2px 6px -2px #000; transition:.2s; }
+    table tbody tr:hover { background:#1c3140; }
+    table td { padding:8px 10px; border-top:1px solid #233645; border-bottom:1px solid #233645; }
+    table tbody tr td:first-child { border-left:1px solid #233645; border-top-left-radius:10px; border-bottom-left-radius:10px; }
+    table tbody tr td:last-child { border-right:1px solid #233645; border-top-right-radius:10px; border-bottom-right-radius:10px; }
+    .tag { display:inline-flex; align-items:center; gap:4px; padding:3px 10px 4px; border-radius:999px; font-size:11px; font-weight:600; letter-spacing:.3px; position:relative; }
+    .tag.ok { background:#0d3324; color:var(--ok); border:1px solid #1d5a41; }
+    .tag.bad { background:#3a1216; color:var(--danger); border:1px solid #5d1e24; }
+    .tag.other { background:#253540; color:#b6c6d4; border:1px solid #324b58; }
+    .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:18px; margin-top:18px; }
+    .metric { background:#152530; border:1px solid #223746; padding:14px 14px 16px; border-radius:14px; position:relative; overflow:hidden; }
+    .metric:before { content:""; position:absolute; top:-20%; right:-10%; width:120px; height:120px; background:radial-gradient(circle at 30% 30%,#2d7dff25,transparent 65%); transform:rotate(25deg); }
+    .metric h4 { margin:0 0 6px; font-size:11px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:#7b95aa; }
+    .metric span { font-size:22px; font-weight:600; letter-spacing:.4px; }
+    #liveStream { width:100%; max-width:980px; aspect-ratio:16 / 9; object-fit:contain; background:#000; border:1px solid #203341; border-radius:18px; box-shadow:0 4px 24px -6px #000; }
+    .alert-list { list-style:none; padding:0; margin:10px 0 0; max-height:240px; overflow:auto; display:grid; gap:8px; }
+    .alert-item { background:linear-gradient(135deg,#2d121480,#2d171980); border:1px solid #44292c; padding:10px 12px; border-radius:12px; font-size:12px; display:flex; justify-content:space-between; align-items:center; gap:14px; position:relative; animation:fadeIn .5s ease; }
+    .alert-item:before { content:""; position:absolute; inset:0; background:linear-gradient(140deg,#ff4d5b10,#ff4d5b05); border-radius:inherit; }
+    .alert-item span.zone { color:#ffbfbf; font-weight:600; letter-spacing:.4px; }
+    .alert-item span.cls { color:var(--danger); font-weight:700; font-size:13px; letter-spacing:.6px; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    select { width:100%; background:#172a37; border:1px solid #263a49; padding:10px 14px; border-radius:12px; color:#d7e3ec; font-size:13px; font-weight:500; }
+    select:focus { outline:1px solid var(--accent); }
+    .led { width:14px; height:14px; border-radius:50%; background:#3a4956; box-shadow:0 0 0 2px #101c25 inset,0 0 0 0 rgba(24,194,124,0); display:inline-block; margin-left:10px; transition:.45s cubic-bezier(.55,.21,.17,.99); position:relative; }
+    .led.on { background:#18c27c; box-shadow:0 0 0 2px #10251b inset, 0 0 18px 4px rgba(24,194,124,.45); }
+    .led.on:after { content:""; position:absolute; inset:-6px; background:radial-gradient(circle at 50% 50%,rgba(24,194,124,.55),transparent 70%); opacity:.8; filter:blur(4px); }
+    .led.pulse { animation:pulse 2.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.18); } }
+    footer { text-align:center; padding:28px 0 46px; font-size:11px; opacity:.55; }
+    .inline { display:inline-flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .danger { color:var(--danger); }
+    .small { font-size:11px; opacity:.6; }
+    .grid { display:grid; gap:28px; }
+    .grid.cols-2 { grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); }
+    .top-bar { display:flex; flex-wrap:wrap; gap:18px; align-items:center; margin-bottom:18px; }
+    .switch { position:relative; width:52px; height:28px; }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider { position:absolute; cursor:pointer; inset:0; background:#243947; border-radius:28px; transition:.35s; border:1px solid #2f4757; }
+    .slider:before { content:""; position:absolute; height:22px; width:22px; left:3px; top:2px; background:#9fb6c7; border-radius:50%; transition:.35s; box-shadow:0 2px 6px -1px #000; }
+    input:checked + .slider { background:var(--accent-grad); box-shadow:0 0 0 1px #2d7dff55 inset; }
+    input:checked + .slider:before { transform:translateX(24px); background:#fff; }
+    .live-toggle { display:flex; align-items:center; gap:12px; background:#162a37; padding:10px 16px; border:1px solid #234254; border-radius:14px; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+    .panel-head .actions { display:flex; gap:12px; }
+    .fade-enter { animation:fadeIn .55s ease; }
+    @media (max-width:1100px){ .app { grid-template-columns:100%; } aside { order:2; } main { order:1; padding:26px 26px 70px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PPE Vision Console <span class="badge">YOLOv8</span></h1>
+    <div style="display:flex;align-items:center;gap:14px; font-size:12px; color:var(--text-dim);">
+      <span id="statusText">Idle</span>
+      <div class="led" id="streamLed" title="Stream Status"></div>
+    </div>
+  </header>
+  <div class="app">
+    <aside>
+      <section class="block">
+        <h2>Stream Control</h2>
+        <div class="live-toggle">
+          <label class="switch" title="Toggle Live Stream">
+            <input id="toggleLive" type="checkbox" />
+            <span class="slider"></span>
+          </label>
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <strong style="font-size:13px; letter-spacing:.5px;">Live Stream</strong>
+            <span class="small">MJPEG realtime feed</span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <label class="lbl">Camera <span style="font-weight:500;" id="camMeta"></span></label>
+        <select id="cameraSelect"></select>
+        <div style="height:14px;"></div>
+        <label class="lbl">Confidence <span id="confVal" class="value-pill">0.50</span></label>
+        <input id="globalConf" type="range" min="0.1" max="0.95" step="0.05" value="0.5" />
+        <div style="height:18px;"></div>
+        <div class="toggles">
+          <div class="toggle"><span>Tracking</span><input type="checkbox" id="toggleTracking" checked></div>
+          <div class="toggle"><span>Draw Zones</span><input type="checkbox" id="toggleZones" checked></div>
+          <div class="toggle"><span>Beep Alerts</span><input type="checkbox" id="toggleBeep"></div>
+        </div>
+        <div class="divider"></div>
+        <div class="apply-row">
+          <button id="applyConfig" class="primary" style="flex:1;">Apply</button>
+          <button id="refreshZonesBtn" class="outline" style="width:46%;">Zones</button>
+        </div>
+        <p class="note">Apply updates tracking / zone overlay / alert sound settings and default confidence threshold.</p>
+      </section>
+
+      <section class="block">
+        <h2>Zones</h2>
+        <div id="zonesList" class="small" style="max-height:160px;overflow:auto; line-height:1.5;"></div>
+        <div class="upload-zone" id="zoneUpload">Drop/Click Zone JSON</div>
+        <input id="zoneFile" type="file" accept="application/json" style="display:none;" />
+        <p class="note">JSON array of objects {name, points[[x,y]...], alert_on[]}.</p>
+      </section>
+
+      <section class="block">
+        <h2>Image / Video</h2>
+        <div class="upload-zone" id="imageDrop">Drop Image / Click</div>
+        <input id="imageInput" type="file" accept="image/*" style="display:none;" />
+        <div class="upload-zone" id="videoDrop" style="margin-top:12px;">Drop Video / Click</div>
+        <input id="videoInput" type="file" accept="video/*" style="display:none;" />
+        <div class="inline" style="margin-top:12px;">
+          <button id="runImage" class="outline">Process Image</button>
+          <button id="runVideo" class="outline">Process Video</button>
+        </div>
+        <a id="videoDownload" style="display:none;margin-top:12px;font-size:12px;">Download Processed</a>
+      </section>
+    </aside>
+    <main>
+      <div class="grid">
+        <section class="block" id="livePanel">
+          <div class="panel-head">
+            <h2 style="margin:0;">Live Stream</h2>
+            <div class="inline" style="font-size:11px; color:var(--text-dim);">
+              <span>Conf:</span><span id="confBadge" class="value-pill">0.50</span>
+              <button id="captureFrame" class="outline" style="font-size:11px;padding:6px 12px; line-height:1;">Capture Frame</button>
+            </div>
+          </div>
+          <img id="liveStream" alt="Live stream" />
+          <div class="metrics">
+            <div class="metric"><h4>FPS</h4><span id="mFps">0</span></div>
+            <div class="metric"><h4>Detections</h4><span id="mDet">0</span></div>
+            <div class="metric"><h4>Non-Compliant</h4><span id="mNon">0</span></div>
+            <div class="metric"><h4>Frames</h4><span id="mFrames">0</span></div>
+          </div>
+          <h3>Recent Alerts</h3>
+            <div class="alert-list" id="alertList"></div>
+          <h3>Recent Detections</h3>
+          <div style="overflow:auto;">
+            <table>
+              <thead><tr><th>ID</th><th>Class</th><th>Conf</th><th>Compliance</th></tr></thead>
+              <tbody id="detTable"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="block" id="resultPanel">
+          <h2>Last Image Result</h2>
+          <img id="imgResult" class="media-preview" style="display:none;" />
+          <pre id="imgJson" class="json" style="display:none;"></pre>
+        </section>
+      </div>
+    </main>
+  </div>
+  <footer>© 2025 PPE Vision Console</footer>
+
+  <script>
+    const $ = sel => document.querySelector(sel);
+    const confSlider = $('#globalConf');
+    const confVal = $('#confVal');
+    const confBadge = $('#confBadge');
+    const led = $('#streamLed');
+    const statusText = $('#statusText');
+    let liveOn = false; let pollTimer = null; const liveImg = $('#liveStream');
+
+    function updateConfDisplay(){
+      const v = parseFloat(confSlider.value).toFixed(2); confVal.textContent = v; confBadge.textContent = v; }
+    confSlider.addEventListener('input', updateConfDisplay); updateConfDisplay();
+
+    async function refreshZones(){
+      try { const r = await fetch('/api/zones'); const z = await r.json();
+        const list = $('#zonesList'); list.innerHTML='';
+        if(!z.length){ list.innerHTML='<em style="opacity:.6;">No zones</em>'; return; }
+        z.forEach(zone=>{
+          const wrap = document.createElement('div'); wrap.style.marginBottom='8px';
+          wrap.innerHTML = `<strong>${zone.name}</strong> <span class='small'>(alert_on ${zone.alert_on.length})</span> <a data-del='${zone.name}' style='cursor:pointer;color:#ff7080;font-size:11px;text-decoration:none;'>[remove]</a>`;
+          list.appendChild(wrap);
+        });
+        list.querySelectorAll('a[data-del]').forEach(a=> a.addEventListener('click', async ()=>{ await fetch('/api/zones/'+a.dataset.del,{method:'DELETE'}); refreshZones(); }));
+      } catch(e){}
+    }
+    refreshZones();
+    $('#refreshZonesBtn').addEventListener('click', refreshZones);
+
+    async function applyConfig(){
+      const payload = { tracking: $('#toggleTracking').checked, draw_zones: $('#toggleZones').checked, beep: $('#toggleBeep').checked, default_conf: parseFloat(confSlider.value) };
+      await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    }
+    $('#applyConfig').addEventListener('click', applyConfig);
+
+    function setupUpload(zoneSel, inputSel){
+      const zone = $(zoneSel); const input = $(inputSel);
+      zone.addEventListener('click', ()=> input.click());
+      ['dragenter','dragover'].forEach(evt=> zone.addEventListener(evt, e=>{ e.preventDefault(); zone.classList.add('drag'); }));
+      ;['dragleave','drop'].forEach(evt=> zone.addEventListener(evt, e=>{ e.preventDefault(); zone.classList.remove('drag'); }));
+      zone.addEventListener('drop', e=>{ input.files = e.dataTransfer.files; });
+    }
+    setupUpload('#imageDrop','#imageInput');
+    setupUpload('#videoDrop','#videoInput');
+    setupUpload('#zoneUpload','#zoneFile');
+
+    async function runImage(){
+      const f = $('#imageInput').files[0]; if(!f) return alert('Select image');
+      const fd = new FormData(); fd.append('file', f); const conf = parseFloat(confSlider.value);
+      const r = await fetch('/api/predict/image?conf='+conf, {method:'POST', body:fd}); if(!r.ok) return alert('Image error');
+      const data = await r.json(); $('#imgResult').style.display='block'; $('#imgJson').style.display='block'; $('#imgJson').textContent = JSON.stringify(data.detections, null, 2); $('#imgResult').src = 'data:image/jpeg;base64,'+data.image_b64;
+    }
+    $('#runImage').addEventListener('click', runImage);
+
+    async function runVideo(){
+      const f = $('#videoInput').files[0]; if(!f) return alert('Select video');
+      const fd = new FormData(); fd.append('file', f); const conf=parseFloat(confSlider.value);
+      const r = await fetch('/api/predict/video?conf='+conf, {method:'POST', body:fd}); if(!r.ok) return alert('Video error');
+      const blob = await r.blob(); const url = URL.createObjectURL(blob); const a = $('#videoDownload'); a.href = url; a.style.display='inline'; a.textContent='Download Processed';
+    }
+    $('#runVideo').addEventListener('click', runVideo);
+
+    $('#zoneFile').addEventListener('change', async ()=>{
+      const file = $('#zoneFile').files[0]; if(!file) return; const text= await file.text();
+      try { const arr = JSON.parse(text); if(!Array.isArray(arr)) throw new Error('Root must be array'); for(const z of arr){ await fetch('/api/zones',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(z)});} refreshZones(); } catch(e){ alert('Zone parse error: '+e.message); }
+    });
+
+    async function populateCams(){
+      try { const r = await fetch('/api/cameras'); if(!r.ok) return; const data = await r.json(); const sel = $('#cameraSelect'); sel.innerHTML='';
+        data.cameras.forEach(c=>{ const opt=document.createElement('option'); opt.value=c.index; opt.textContent=`Camera ${c.index} (${c.width}x${c.height})`; sel.appendChild(opt); });
+        const cfg = await (await fetch('/api/config')).json(); sel.value = cfg.camera_index ?? 0; updateCamMeta();
+      } catch(e){}
+    }
+    function updateCamMeta(){ const sel=$('#cameraSelect'); const opt=sel.options[sel.selectedIndex]; $('#camMeta').textContent = opt? opt.textContent.split(' ').slice(1).join(' ') : ''; }
+    $('#cameraSelect').addEventListener('change', updateCamMeta);
+    populateCams();
+
+    async function startStream(){ if(liveOn) return; const conf=parseFloat(confSlider.value); const cam=$('#cameraSelect').value; await fetch('/api/config',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({camera_index: parseInt(cam)})}); liveImg.src='/stream?camera='+cam+'&conf='+conf+'&_='+Date.now(); liveOn=true; led.classList.add('on','pulse'); statusText.textContent='Streaming'; pollStats(); }
+    function stopStream(){ if(!liveOn) return; liveImg.src=''; liveOn=false; led.classList.remove('on','pulse'); statusText.textContent='Idle'; if(pollTimer) clearTimeout(pollTimer); }
+    $('#toggleLive').addEventListener('change', e=> e.target.checked ? startStream() : stopStream());
+
+    function captureCurrentFrame(){
+      if(!liveOn || !liveImg.complete) return; // basic guard
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = liveImg.naturalWidth || liveImg.width; canvas.height = liveImg.naturalHeight || liveImg.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(liveImg,0,0,canvas.width,canvas.height);
+        canvas.toBlob(blob=>{ if(!blob) return; const a=document.createElement('a'); const ts=new Date().toISOString().replace(/[:.]/g,'-'); a.download = `frame-${ts}.png`; a.href=URL.createObjectURL(blob); a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000); }, 'image/png');
+      } catch(e){ console.warn('Capture failed', e); }
+    }
+    $('#captureFrame').addEventListener('click', captureCurrentFrame);
+
+    async function pollStats(){
+      try { const r = await fetch('/api/live_stats'); if(r.ok){ const s = await r.json();
+        $('#mFps').textContent = s.fps || 0; $('#mDet').textContent = s.detections; $('#mNon').textContent = s.non_compliant; $('#mFrames').textContent = s.frames;
+        const detBody = $('#detTable'); detBody.innerHTML=''; (s.recent_detections||[]).forEach(d=>{
+          const tr=document.createElement('tr'); const comp = d.cls_name && (d.cls_name.startsWith('NO-')? 'bad' : (['Hardhat','Mask','Safety Vest'].includes(d.cls_name)?'ok':'other'));
+          tr.innerHTML = `<td>${d.track_id||''}</td><td>${d.cls_name||''}</td><td>${(d.conf||0).toFixed(2)}</td><td><span class='tag ${comp}'>${comp}</span></td>`; detBody.appendChild(tr);
+        });
+        const al = $('#alertList'); al.innerHTML=''; (s.alerts_last||[]).forEach(a=>{ const row=document.createElement('div'); row.className='alert-item'; row.innerHTML = `<span class='zone'>${a.zone}</span><span class='cls'>${a.cls_name}</span>`; al.appendChild(row); });
+      }} catch(e){} finally { if(liveOn) pollTimer = setTimeout(pollStats, 1000); }
+    }
+    pollStats();
+  </script>
+</body>
+</html>
