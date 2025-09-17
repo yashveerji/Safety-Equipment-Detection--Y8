@@ -8,6 +8,8 @@ from typing import List, Dict, Any, Optional, Tuple
 import math
 import time
 from pathlib import Path
+import os
+from urllib.request import urlretrieve
 
 import cv2
 import cvzone
@@ -92,9 +94,32 @@ def resize_keep_aspect(frame, max_dim: Optional[int]):
 
 class Detector:
     def __init__(self, model_path: str = 'ppe.pt', device: Optional[str] = None, conf: float = 0.5, max_dim: Optional[int] = None, imgsz: Optional[int] = None):
-        if not Path(model_path).exists():
-            raise FileNotFoundError(f"Model not found: {model_path}")
-        self.model = YOLO(model_path)
+        """Initialize detector.
+
+        Behavior when model file is missing:
+        1. If env PPE_MODEL_URL provided and model_path ends with .pt, attempt download to that path.
+        2. If still missing, load fallback weight name from env PPE_MODEL_FALLBACK (default 'yolov8n.pt').
+        3. Emit warning to stdout so platform logs show reason instead of hard crash.
+        """
+        p = Path(model_path)
+        if not p.exists():
+            # Attempt download if URL provided
+            dl_url = os.getenv('PPE_MODEL_URL')
+            if dl_url and model_path.endswith('.pt'):
+                try:
+                    print(f"[INFO] Model '{model_path}' missing. Downloading from PPE_MODEL_URL: {dl_url}")
+                    urlretrieve(dl_url, model_path)
+                except Exception as e:  # noqa: BLE001
+                    print(f"[WARN] Download failed ({e}). Will try fallback model.")
+        if not p.exists():
+            fallback_name = os.getenv('PPE_MODEL_FALLBACK', 'yolov8n.pt')
+            print(f"[WARN] Model file '{model_path}' not found after attempts. Using fallback '{fallback_name}'.")
+            try:
+                self.model = YOLO(fallback_name)
+            except Exception as e:  # pragma: no cover
+                raise FileNotFoundError(f"Could not load fallback model '{fallback_name}': {e}") from e
+        else:
+            self.model = YOLO(model_path)
         if device:
             try:
                 self.model.to(device)

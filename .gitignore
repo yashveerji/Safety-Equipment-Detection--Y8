@@ -14,8 +14,6 @@ python_env/
 .env.local
 
 # Model training artifacts (keep committed model weights explicitly if needed)
-*.pt
-!ppe.pt  # Keep the main PPE YOLO model already tracked
 *.onnx
 runs/
 checkpoints/
